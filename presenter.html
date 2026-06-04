@@ -9,65 +9,136 @@
   <style>
     body {
       background-color: #AF898E; /* 莫蘭迪粉灰背景 */
-      color: #E67389; /* 深粉色文字 */
+      color: #FFFFFF; 
       font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       height: 100vh; margin: 0; overflow: hidden;
     }
     .rating-container {
-      background-color: #F4C7CE; /* 粉彩紙卡背景 */
-      padding: 100px 80px;
-      border-radius: 4px;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+      background-color: transparent;
       text-align: center;
       position: relative;
-      width: 60%;
-      max-width: 600px;
-      height: 70vh;
       display: flex;
       flex-direction: column;
+      align-items: center;
+    }
+    
+    /* 簡報者名稱與頭像區塊 */
+    .profile-section {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .profile-pic {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      border: 3px solid #FFFFFF;
+      background-color: #D3D3D3; /* 預設灰色，可自行替換圖片 */
+      margin-right: 20px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .presenter-name {
+      font-size: 5rem;
+      font-weight: 200; /* 極細字體 */
+      letter-spacing: 2px;
+      margin: 0;
+      text-shadow: 0 2px 10px rgba(255,255,255,0.3);
+    }
+
+    /* 分數顯示區塊 */
+    .score-display {
+      display: flex;
+      align-items: baseline;
       justify-content: center;
     }
-    h2 { 
-      font-size: 2rem; 
-      font-weight: 300; 
-      letter-spacing: 2px; 
-      margin-bottom: 50px;
-      opacity: 0.8;
-    }
-    #rating-value {
-      font-size: 15rem; /* 超大極簡字體 */
-      font-weight: 100; /* 極細字重 */
+    #rating-main {
+      font-size: 12rem;
+      font-weight: 200;
       margin: 0; 
-      color: #E67389;
       line-height: 1;
       transition: transform 0.1s;
     }
-    .stars-display {
-      font-size: 4rem;
-      color: #E67389;
-      margin-top: 20px;
-      letter-spacing: 5px;
+    #rating-decimal {
+      font-size: 6rem;
+      font-weight: 200;
+      margin-left: 5px;
+      opacity: 0.8;
+    }
+
+    /* 低分警示區塊 (預設隱藏) */
+    #warning-message {
+      margin-top: 30px;
+      padding: 15px 30px;
+      background-color: rgba(220, 53, 69, 0.9); /* 警告紅 */
+      color: white;
+      font-size: 1.5rem;
+      font-weight: 400;
+      border-radius: 50px;
+      letter-spacing: 1px;
+      box-shadow: 0 5px 15px rgba(220, 53, 69, 0.4);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.5s ease;
+    }
+    .show-warning {
+      opacity: 1 !important;
+      transform: translateY(0) !important;
+    }
+
+    /* 底部資訊區塊 */
+    .footer-info {
+      position: absolute;
+      bottom: 30px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      opacity: 0.6;
     }
     #total-votes { 
       font-size: 1rem; 
       font-weight: 300;
-      margin-top: 50px;
-      opacity: 0.7;
+      margin-bottom: 10px;
     }
     #reset-btn {
-      position: absolute; bottom: 20px; right: 20px; background: transparent;
-      border: none; color: #E67389; cursor: pointer; font-size: 0.8rem; font-weight: 300; opacity: 0.5;
+      background: transparent;
+      border: 1px solid #FFFFFF; 
+      color: #FFFFFF; 
+      padding: 5px 15px;
+      border-radius: 15px;
+      cursor: pointer; 
+      font-size: 0.8rem; 
+      font-weight: 300; 
+      transition: all 0.3s ease;
     }
-    #reset-btn:hover { opacity: 1; }
+    #reset-btn:hover { 
+      background-color: #FFFFFF;
+      color: #AF898E;
+    }
   </style>
 </head>
 <body>
   
   <div class="rating-container">
-    <h2>"You've been rated"</h2>
-    <p id="rating-value">0.0</p>
-    <div class="stars-display">★★★★★</div>
+    
+    <div class="profile-section">
+      <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" class="profile-pic" alt="Profile">
+      <h1 class="presenter-name">Chang</h1>
+    </div>
+
+    <div class="score-display">
+      <span id="rating-main">0.0</span>
+      <span id="rating-decimal">0</span>
+    </div>
+
+    <div id="warning-message">
+      ⚠️ WARNING: SCORE BELOW 3.0. PENALTY IMMINENT.
+    </div>
+
+  </div>
+
+  <div class="footer-info">
     <p id="total-votes">Total Ratings: 0</p>
     <button id="reset-btn" onclick="resetVotes()">RESET</button>
   </div>
@@ -87,8 +158,10 @@
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
-    const ratingValue = document.getElementById('rating-value');
+    const ratingMain = document.getElementById('rating-main');
+    const ratingDecimal = document.getElementById('rating-decimal');
     const totalVotesText = document.getElementById('total-votes');
+    const warningMessage = document.getElementById('warning-message');
 
     // 實時監聽資料庫的變化
     database.ref('votes').on('value', (snapshot) => {
@@ -102,17 +175,36 @@
           count++;
         });
         
-        const average = (totalScore / count).toFixed(1);
+        // 計算精準到小數點後兩位
+        const average = (totalScore / count).toFixed(2);
+        const scoreNumber = parseFloat(average);
         
-        ratingValue.innerText = average;
+        // 拆分主分數與小數第二位 (例如 4.23 -> 主分數 4.2，小數第二位 3)
+        const parts = average.split('.');
+        let mainPart = parts[0] + '.' + parts[1].charAt(0); // 取得 4.2
+        let decimalPart = parts[1].charAt(1); // 取得 3
+        
+        // 更新畫面數字
+        ratingMain.innerText = mainPart;
+        ratingDecimal.innerText = decimalPart;
         totalVotesText.innerText = `Total Ratings: ${count}`;
         
+        // 檢查是否低於 3 分並觸發警示
+        if (scoreNumber > 0 && scoreNumber < 3.00) {
+          warningMessage.classList.add('show-warning');
+        } else {
+          warningMessage.classList.remove('show-warning');
+        }
+
         // 數字跳動特效
-        ratingValue.style.transform = 'scale(1.05)';
-        setTimeout(() => ratingValue.style.transform = 'scale(1)', 150);
+        ratingMain.style.transform = 'scale(1.05)';
+        setTimeout(() => ratingMain.style.transform = 'scale(1)', 150);
       } else {
-        ratingValue.innerText = "0.0";
+        // 重置狀態
+        ratingMain.innerText = "0.0";
+        ratingDecimal.innerText = "0";
         totalVotesText.innerText = "Total Ratings: 0";
+        warningMessage.classList.remove('show-warning');
       }
     });
 
