@@ -129,7 +129,7 @@
 
     <div class="score-display">
       <span id="rating-main">0.0</span>
-      <span id="rating-decimal">0</span>
+      <span id="rating-decimal">00</span>
     </div>
 
     <div id="warning-message">
@@ -176,7 +176,7 @@
         });
         
         // 計算精準到小數點後兩位
-        const average = (totalScore / count).toFixed(2);
+        const average = (totalScore / count).toFixed(3);
         const scoreNumber = parseFloat(average);
         
         // 拆分主分數與小數第二位 (例如 4.23 -> 主分數 4.2，小數第二位 3)
