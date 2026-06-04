@@ -153,7 +153,50 @@
       storageBucket: "nosedive-rating.firebasestorage.app",
       messagingSenderId: "834309397899",
       appId: "1:834309397899:web:f963905148059195ad238e"
-    };
+    };// 實時監聽資料庫的變化
+    database.ref('votes').on('value', (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        let totalScore = 0;
+        let count = 0;
+        
+        Object.keys(data).forEach(key => {
+          totalScore += data[key].rating;
+          count++;
+        });
+        
+        // 【修改這裡】計算到小數點後三位，這樣小字才會有兩位數！
+        const average = (totalScore / count).toFixed(3);
+        const scoreNumber = parseFloat(average);
+        
+        // 拆分主分數與小字後兩位 (例如 4.243 -> 主分數 4.2，小字 43)
+        const parts = average.split('.');
+        let mainPart = parts[0] + '.' + parts[1].charAt(0); // 取得 4.2
+        let decimalPart = parts[1].substring(1);            // 取得 43
+        
+        // 更新畫面數字
+        ratingMain.innerText = mainPart;
+        ratingDecimal.innerText = decimalPart;
+        totalVotesText.innerText = `Total Ratings: ${count}`;
+        
+        // 檢查是否低於 3 分並觸發警示
+        if (scoreNumber > 0 && scoreNumber < 3.00) {
+          warningMessage.classList.add('show-warning');
+        } else {
+          warningMessage.classList.remove('show-warning');
+        }
+
+        // 數字跳動特效
+        ratingMain.style.transform = 'scale(1.05)';
+        setTimeout(() => ratingMain.style.transform = 'scale(1)', 150);
+      } else {
+        // 重置狀態
+        ratingMain.innerText = "0.0";
+        ratingDecimal.innerText = "00"; // 重置也顯示兩個零
+        totalVotesText.innerText = "Total Ratings: 0";
+        warningMessage.classList.remove('show-warning');
+      }
+    });
 
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
