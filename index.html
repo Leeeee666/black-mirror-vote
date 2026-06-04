@@ -3,67 +3,147 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rate the Presenter - Nosedive</title>
-  <!-- 引入 Firebase SDK -->
+  <title>Rate - Nosedive</title>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
   <style>
     body {
-      background-color: #AF898E; /* 莫蘭迪粉灰背景 */
-      color: #E67389; /* 深粉色文字 */
+      background-color: #CE8F7B; /* 劇中手機的蜜桃粉橘背景 */
+      color: #3B2A2A; /* 深咖啡色字體 */
       font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-      font-weight: 300;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      height: 100vh; margin: 0;
+      height: 100vh; margin: 0; overflow: hidden;
     }
-    .card {
-      background-color: #F4C7CE; /* 粉彩紙卡背景 */
-      padding: 50px 30px;
-      border-radius: 4px;
-      box-shadow: 0 15px 35px rgba(0,0,0,0.15);
-      text-align: center;
-      width: 80%;
-      max-width: 350px;
+    
+    .phone-container {
+      width: 100%;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
-    h1 { 
-      font-size: 1.2rem; 
-      font-weight: 300; 
+
+    /* 即時分數顯示區 */
+    .score-display {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      margin-bottom: 15px;
+    }
+    #score-main {
+      font-size: 6rem;
+      font-weight: 100;
+      line-height: 0.8;
+      letter-spacing: -2px;
+    }
+    .score-right {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-left: 5px;
+    }
+    /* 趨勢箭頭 (圈圈包覆) */
+    .trend-circle {
+      width: 24px;
+      height: 24px;
+      border: 1.5px solid #3B2A2A;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 2px;
+    }
+    #trend-arrow {
+      font-size: 1rem;
+      font-weight: bold;
+    }
+    #score-decimal {
+      font-size: 2.5rem;
+      font-weight: 100;
+      line-height: 1;
+    }
+
+    /* 對象資訊 (小頭像 + ANON) */
+    .target-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 25px;
+    }
+    .target-avatar {
+      width: 22px;
+      height: 22px;
+      background-color: #4A3A6A; /* 深紫色 */
+      border-radius: 50%;
+      border: 1px solid #3B2A2A;
+      position: relative;
+    }
+    /* 簡單畫一個剪影小人 */
+    .target-avatar::after {
+      content: ''; position: absolute; bottom: 0; left: 15%; width: 70%; height: 50%;
+      background-color: #2D2040; border-radius: 10px 10px 0 0;
+    }
+    .target-avatar::before {
+      content: ''; position: absolute; top: 15%; left: 30%; width: 40%; height: 40%;
+      background-color: #2D2040; border-radius: 50%;
+    }
+    .target-name {
+      font-size: 0.9rem;
+      font-weight: 400;
       letter-spacing: 1px;
-      margin-bottom: 30px;
     }
+
+    /* 評分星星 */
     .star-rating { 
-      display: flex; flex-direction: row-reverse; justify-content: center; gap: 5px; 
+      display: flex; flex-direction: row-reverse; justify-content: center; gap: 8px; 
       transition: opacity 0.3s;
     }
     .star-rating input { display: none; }
     .star-rating label { 
-      font-size: 3.5rem; 
-      color: #F0AFBB; /* 未選中的淺粉色星星 */
+      font-size: 3rem; 
+      color: transparent;
+      -webkit-text-stroke: 1.5px #A08585; /* 預設空心星星外框 */
       cursor: pointer; 
-      transition: color 0.3s; 
+      transition: all 0.3s; 
     }
+    /* 點擊後變成劇中那種發光的紫藍色 */
     .star-rating input:checked ~ label, 
     .star-rating label:hover, 
     .star-rating label:hover ~ label {
-      color: #E67389; /* 選中或懸停時的深粉色星星 */
+      color: #8A78E5; 
+      -webkit-text-stroke: 1.5px #6A58C5;
+      text-shadow: 0 0 15px rgba(138, 120, 229, 0.8);
     }
-    
-    /* 按鈕共用樣式 */
+
+    /* 動作按鈕 */
     .action-btn {
-      margin-top: 40px; padding: 12px 25px; font-size: 1rem; font-weight: 300;
-      background-color: transparent; border: 1px solid #E67389; color: #E67389; 
-      cursor: pointer; transition: all 0.3s ease; border-radius: 30px; letter-spacing: 1px;
+      margin-top: 40px; padding: 12px 30px; font-size: 0.9rem; font-weight: 400;
+      background-color: transparent; border: 1.5px solid #3B2A2A; color: #3B2A2A; 
+      cursor: pointer; transition: all 0.3s ease; border-radius: 30px; letter-spacing: 2px;
     }
-    .action-btn:hover { background-color: #E67389; color: #F4C7CE; }
-    
-    #rerate-btn { display: none; } /* 重新評分按鈕預設隱藏 */
-    #status { margin-top: 20px; font-size: 0.9rem; display: none; }
+    .action-btn:hover { background-color: #3B2A2A; color: #CE8F7B; }
+    #rerate-btn { display: none; }
+    #status { margin-top: 20px; font-size: 0.8rem; font-weight: 300; display: none; }
+
   </style>
 </head>
 <body>
   
-  <div class="card">
-    <h1>"You've been rated"</h1>
+  <div class="phone-container">
+    
+    <div class="score-display">
+      <span id="score-main">0.0</span>
+      <div class="score-right">
+        <div class="trend-circle"><span id="trend-arrow">-</span></div>
+        <span id="score-decimal">00</span>
+      </div>
+    </div>
+
+    <div class="target-info">
+      <div class="target-avatar"></div>
+      <span class="target-name">ANON</span>
+    </div>
+
     <div class="star-rating" id="star-container">
       <input type="radio" name="rating" id="star5" value="5"><label for="star5">★</label>
       <input type="radio" name="rating" id="star4" value="4"><label for="star4">★</label>
@@ -73,7 +153,7 @@
     </div>
     
     <button id="submit-btn" class="action-btn">RATE</button>
-    <button id="rerate-btn" class="action-btn">RE-RATE (重新評分)</button>
+    <button id="rerate-btn" class="action-btn">RE-RATE</button>
     
     <p id="status">Rating submitted.</p>
   </div>
@@ -93,52 +173,88 @@
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
+    // 介面元素
+    const scoreMain = document.getElementById('score-main');
+    const scoreDecimal = document.getElementById('score-decimal');
+    const trendArrow = document.getElementById('trend-arrow');
     const submitBtn = document.getElementById('submit-btn');
     const rerateBtn = document.getElementById('rerate-btn');
     const statusText = document.getElementById('status');
     const starContainer = document.getElementById('star-container');
 
-    // 用來記錄這位聽眾「專屬的投票 ID」
     let myVoteKey = null;
+    let previousScore = 0; // 用來記憶上一次的分數，判斷箭頭方向
 
+    // 【新增功能】手機端也要實時監聽分數變化
+    database.ref('votes').on('value', (snapshot) => {
+      const data = snapshot.val();
+      let currentScoreNum = 0.000;
+
+      if (data) {
+        let totalScore = 0;
+        let count = 0;
+        Object.keys(data).forEach(key => {
+          totalScore += data[key].rating;
+          count++;
+        });
+        
+        const average = (totalScore / count).toFixed(3);
+        currentScoreNum = parseFloat(average);
+        
+        const parts = average.split('.');
+        scoreMain.innerText = parts[0] + '.' + parts[1].charAt(0);
+        scoreDecimal.innerText = parts[1].substring(1);
+      } else {
+        scoreMain.innerText = "0.0";
+        scoreDecimal.innerText = "00";
+      }
+
+      // 判斷箭頭趨勢 (變高↑, 變低↓, 不變-)
+      if (currentScoreNum > previousScore && previousScore !== 0) {
+        trendArrow.innerHTML = '↑';
+      } else if (currentScoreNum < previousScore) {
+        trendArrow.innerHTML = '↓';
+      } else {
+        trendArrow.innerHTML = '-';
+      }
+      
+      // 記錄這次的分數給下次做比較
+      previousScore = currentScoreNum;
+    });
+
+    // 提交分數邏輯 (與先前相同，包含記憶重新評分)
     submitBtn.addEventListener('click', () => {
       const selectedRating = document.querySelector('input[name="rating"]:checked');
       if (selectedRating) {
         const rating = parseInt(selectedRating.value);
         
         if (!myVoteKey) {
-          // 第一次評分：建立一筆新資料，並把產生的 ID 記下來
           const newVoteRef = database.ref('votes').push();
           myVoteKey = newVoteRef.key;
           newVoteRef.set({ rating: rating, timestamp: Date.now() });
         } else {
-          // 更新評分：針對同一個 ID 覆蓋分數，總人數不會增加
           database.ref('votes/' + myVoteKey).update({ rating: rating, timestamp: Date.now() });
         }
         
-        // 介面切換：隱藏送出鍵，顯示重新評分鍵
         submitBtn.style.display = 'none';
         rerateBtn.style.display = 'inline-block';
-        starContainer.style.opacity = '0.5';
-        starContainer.style.pointerEvents = 'none'; // 鎖定星星不可點擊
+        starContainer.style.opacity = '0.4';
+        starContainer.style.pointerEvents = 'none';
         
-        statusText.innerText = 'Rating submitted.';
         statusText.style.display = 'block';
       } else {
         alert('Please select a rating.');
       }
     });
 
-    // 當聽眾點擊「重新評分」
+    // 重新評分邏輯
     rerateBtn.addEventListener('click', () => {
-      // 解除星星鎖定
       starContainer.style.opacity = '1';
       starContainer.style.pointerEvents = 'auto';
       
-      // 介面切換：隱藏重新評分鍵，顯示更新鍵
       rerateBtn.style.display = 'none';
       submitBtn.style.display = 'inline-block';
-      submitBtn.innerText = 'UPDATE (更新評分)'; // 更改按鈕文字提示聽眾
+      submitBtn.innerText = 'UPDATE';
       
       statusText.style.display = 'none';
     });
