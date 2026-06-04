@@ -4,12 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nosedive Social Rating - LIVE</title>
-  <!-- 引入 Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
   <style>
     body {
-      /* 設定背景圖，讀取你上傳的 bg.png */
       background-image: url('bg.png'); 
       background-size: cover;
       background-position: center;
@@ -36,7 +34,7 @@
     .profile-section {
       display: flex;
       align-items: center;
-      margin-bottom: -15px; /* 讓名字跟下方分數靠近一點 */
+      margin-bottom: -15px;
     }
 
     .profile-pic {
@@ -44,7 +42,6 @@
       height: 80px;
       border-radius: 50%;
       border: 3px solid #FFFFFF;
-      /* 讀取你上傳的 avatar.png */
       background-image: url('avatar.png');
       background-size: cover;
       background-position: center;
@@ -54,7 +51,7 @@
 
     .presenter-name {
       font-size: 6.5rem;
-      font-weight: 100; /* 模擬原劇的極細字體 */
+      font-weight: 100; 
       letter-spacing: 2px;
       margin: 0;
       text-shadow: 0 2px 8px rgba(0,0,0,0.2);
@@ -64,7 +61,7 @@
       display: flex;
       align-items: baseline;
       text-shadow: 0 2px 8px rgba(0,0,0,0.2);
-      padding-left: 15px; /* 稍微往右推，對齊名字 */
+      padding-left: 15px;
     }
 
     #rating-main {
@@ -81,7 +78,32 @@
       margin-left: 8px;
     }
 
-    /* 將重置按鈕藏在右下角，變半透明以免破壞畫面 */
+    /* 頂部低分警告橫條樣式 */
+    #warning-message {
+      position: absolute;
+      top: 5%;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      padding: 15px 40px;
+      background-color: rgba(220, 53, 69, 0.95); /* 警告紅 */
+      color: white;
+      font-size: 1.8rem;
+      font-weight: 400;
+      border-radius: 50px;
+      letter-spacing: 2px;
+      box-shadow: 0 10px 25px rgba(220, 53, 69, 0.5);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.5s ease;
+      z-index: 999;
+    }
+    
+    /* 當觸發警告時滑出並顯示 */
+    .show-warning {
+      opacity: 1 !important;
+      transform: translateX(-50%) translateY(0) !important;
+    }
+
     #reset-btn {
       position: absolute; 
       bottom: 20px; 
@@ -104,12 +126,13 @@
 </head>
 <body>
 
-  <!-- 隱藏在右下角的重置按鈕 -->
+  <div id="warning-message">
+    ⚠️ WARNING: SCORE BELOW 3.0. PENALTY IMMINENT.
+  </div>
+
   <button id="reset-btn" onclick="resetVotes()">RESET</button>
 
-  <!-- 整個文字與頭像的排版區塊 -->
   <div class="rating-overlay">
-    
     <div class="profile-section">
       <div class="profile-pic"></div>
       <h1 class="presenter-name">Lacie</h1>
@@ -119,11 +142,9 @@
       <span id="rating-main">0.0</span>
       <span id="rating-decimal">00</span>
     </div>
-
   </div>
 
   <script>
-    // 你的 Firebase 配置代碼
     const firebaseConfig = {
       apiKey: "AIzaSyD4mZm3QCYHg1BdwF4XZ8j9CpMbqtYqEDQ",
       authDomain: "nosedive-rating.firebaseapp.com",
@@ -139,8 +160,8 @@
 
     const ratingMain = document.getElementById('rating-main');
     const ratingDecimal = document.getElementById('rating-decimal');
+    const warningMessage = document.getElementById('warning-message');
 
-    // 實時監聽資料庫的變化
     database.ref('votes').on('value', (snapshot) => {
       const data = snapshot.val();
       if (data) {
@@ -152,10 +173,9 @@
           count++;
         });
         
-        // 計算到小數點後三位
         const average = (totalScore / count).toFixed(3);
+        const scoreNumber = parseFloat(average);
         
-        // 拆分主分數與小字後兩位
         const parts = average.split('.');
         let mainPart = parts[0] + '.' + parts[1].charAt(0);
         let decimalPart = parts[1].substring(1);
@@ -163,16 +183,22 @@
         ratingMain.innerText = mainPart;
         ratingDecimal.innerText = decimalPart;
 
-        // 數字跳動特效
+        // 【核心邏輯】檢查分數是否大於 0 且低於 3.00，若是則跳出警告
+        if (scoreNumber > 0 && scoreNumber < 3.00) {
+          warningMessage.classList.add('show-warning');
+        } else {
+          warningMessage.classList.remove('show-warning');
+        }
+
         ratingMain.style.transform = 'scale(1.05)';
         setTimeout(() => ratingMain.style.transform = 'scale(1)', 150);
       } else {
         ratingMain.innerText = "0.0";
         ratingDecimal.innerText = "00";
+        warningMessage.classList.remove('show-warning');
       }
     });
 
-    // 清空分數功能
     function resetVotes() {
       if(confirm("Clear all ratings?")) {
         database.ref('votes').remove();
