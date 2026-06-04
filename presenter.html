@@ -8,33 +8,67 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
   <style>
     body {
-      background-color: #030315; color: #fff;
-      font-family: 'Courier New', Courier, monospace;
+      background-color: #AF898E; /* 莫蘭迪粉灰背景 */
+      color: #E67389; /* 深粉色文字 */
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       height: 100vh; margin: 0; overflow: hidden;
     }
     .rating-container {
-      border: 5px solid #ff007f; box-shadow: 0 0 30px rgba(255, 0, 127, 0.5);
-      padding: 40px; border-radius: 20px; text-align: center; position: relative;
+      background-color: #F4C7CE; /* 粉彩紙卡背景 */
+      padding: 100px 80px;
+      border-radius: 4px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+      text-align: center;
+      position: relative;
+      width: 60%;
+      max-width: 600px;
+      height: 70vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    h2 { 
+      font-size: 2rem; 
+      font-weight: 300; 
+      letter-spacing: 2px; 
+      margin-bottom: 50px;
+      opacity: 0.8;
     }
     #rating-value {
-      font-size: 10rem; font-weight: bold; margin: 0; color: #ff007f;
-      text-shadow: 0 0 20px #ff007f, 0 0 40px #ff007f; transition: transform 0.1s;
+      font-size: 15rem; /* 超大極簡字體 */
+      font-weight: 100; /* 極細字重 */
+      margin: 0; 
+      color: #E67389;
+      line-height: 1;
+      transition: transform 0.1s;
     }
-    #total-votes { font-size: 2rem; color: #00ffff; margin-top: 10px;}
-    h2 { font-size: 2.5rem; text-transform: uppercase; letter-spacing: 5px; }
+    .stars-display {
+      font-size: 4rem;
+      color: #E67389;
+      margin-top: 20px;
+      letter-spacing: 5px;
+    }
+    #total-votes { 
+      font-size: 1rem; 
+      font-weight: 300;
+      margin-top: 50px;
+      opacity: 0.7;
+    }
     #reset-btn {
-      position: absolute; bottom: 10px; right: 10px; background: transparent;
-      border: 1px solid #444; color: #444; cursor: pointer; font-size: 0.8rem;
+      position: absolute; bottom: 20px; right: 20px; background: transparent;
+      border: none; color: #E67389; cursor: pointer; font-size: 0.8rem; font-weight: 300; opacity: 0.5;
     }
-    #reset-btn:hover { color: #ff007f; border-color: #ff007f; }
+    #reset-btn:hover { opacity: 1; }
   </style>
 </head>
 <body>
-  <h2>社會信用評分 (Social Rating)</h2>
+  
   <div class="rating-container">
+    <h2>"You've been rated"</h2>
     <p id="rating-value">0.0</p>
-    <p id="total-votes">參與人數: 0</p>
+    <div class="stars-display">★★★★★</div>
+    <p id="total-votes">Total Ratings: 0</p>
     <button id="reset-btn" onclick="resetVotes()">RESET</button>
   </div>
 
@@ -47,11 +81,9 @@
       projectId: "nosedive-rating",
       storageBucket: "nosedive-rating.firebasestorage.app",
       messagingSenderId: "834309397899",
-      appId: "1:834309397899:web:f963905148059195ad238e",
-      measurementId: "G-3FQCWG11TX"
+      appId: "1:834309397899:web:f963905148059195ad238e"
     };
 
-    // 初始化 Firebase
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
@@ -73,20 +105,20 @@
         const average = (totalScore / count).toFixed(1);
         
         ratingValue.innerText = average;
-        totalVotesText.innerText = `參與人數: ${count}`;
+        totalVotesText.innerText = `Total Ratings: ${count}`;
         
         // 數字跳動特效
-        ratingValue.style.transform = 'scale(1.1)';
-        setTimeout(() => ratingValue.style.transform = 'scale(1)', 100);
+        ratingValue.style.transform = 'scale(1.05)';
+        setTimeout(() => ratingValue.style.transform = 'scale(1)', 150);
       } else {
         ratingValue.innerText = "0.0";
-        totalVotesText.innerText = "參與人數: 0";
+        totalVotesText.innerText = "Total Ratings: 0";
       }
     });
 
     // 清空分數功能
     function resetVotes() {
-      if(confirm("確定要清空目前的評分數據嗎？")) {
+      if(confirm("Clear all ratings?")) {
         database.ref('votes').remove();
       }
     }
