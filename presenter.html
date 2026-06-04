@@ -4,147 +4,126 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nosedive Social Rating - LIVE</title>
+  <!-- 引入 Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
   <style>
     body {
-      background-color: #AF898E; /* 莫蘭迪粉灰背景 */
-      color: #FFFFFF; 
+      /* 設定背景圖，讀取你上傳的 bg.png */
+      background-image: url('bg.png'); 
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
       font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      height: 100vh; margin: 0; overflow: hidden;
-    }
-    .rating-container {
-      background-color: transparent;
-      text-align: center;
+      color: #FFFFFF;
+      margin: 0;
+      height: 100vh;
+      overflow: hidden;
       position: relative;
+    }
+
+    /* 將分數區塊絕對定位到畫面的中右側 */
+    .rating-overlay {
+      position: absolute;
+      top: 45%;
+      right: 15%;
+      transform: translateY(-50%);
       display: flex;
       flex-direction: column;
-      align-items: center;
+      align-items: flex-start;
     }
-    
-    /* 簡報者名稱與頭像區塊 */
+
     .profile-section {
       display: flex;
       align-items: center;
-      margin-bottom: 10px;
-    }
-    .profile-pic {
-      width: 70px;
-      height: 70px;
-      border-radius: 50%;
-      border: 3px solid #FFFFFF;
-      background-color: #D3D3D3; /* 預設灰色，可自行替換圖片 */
-      margin-right: 20px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    }
-    .presenter-name {
-      font-size: 5rem;
-      font-weight: 200; /* 極細字體 */
-      letter-spacing: 2px;
-      margin: 0;
-      text-shadow: 0 2px 10px rgba(255,255,255,0.3);
+      margin-bottom: -15px; /* 讓名字跟下方分數靠近一點 */
     }
 
-    /* 分數顯示區塊 */
+    .profile-pic {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      border: 3px solid #FFFFFF;
+      /* 讀取你上傳的 avatar.png */
+      background-image: url('avatar.png');
+      background-size: cover;
+      background-position: center;
+      margin-right: 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    }
+
+    .presenter-name {
+      font-size: 6.5rem;
+      font-weight: 100; /* 模擬原劇的極細字體 */
+      letter-spacing: 2px;
+      margin: 0;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
     .score-display {
       display: flex;
       align-items: baseline;
-      justify-content: center;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      padding-left: 15px; /* 稍微往右推，對齊名字 */
     }
+
     #rating-main {
-      font-size: 12rem;
-      font-weight: 200;
+      font-size: 10rem;
+      font-weight: 100;
       margin: 0; 
       line-height: 1;
       transition: transform 0.1s;
     }
+
     #rating-decimal {
-      font-size: 6rem;
-      font-weight: 200;
-      margin-left: 5px;
-      opacity: 0.8;
+      font-size: 4.5rem;
+      font-weight: 100;
+      margin-left: 8px;
     }
 
-    /* 低分警示區塊 (預設隱藏) */
-    #warning-message {
-      margin-top: 30px;
-      padding: 15px 30px;
-      background-color: rgba(220, 53, 69, 0.9); /* 警告紅 */
-      color: white;
-      font-size: 1.5rem;
-      font-weight: 400;
-      border-radius: 50px;
-      letter-spacing: 1px;
-      box-shadow: 0 5px 15px rgba(220, 53, 69, 0.4);
-      opacity: 0;
-      transform: translateY(20px);
-      transition: all 0.5s ease;
-    }
-    .show-warning {
-      opacity: 1 !important;
-      transform: translateY(0) !important;
-    }
-
-    /* 底部資訊區塊 */
-    .footer-info {
-      position: absolute;
-      bottom: 30px;
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      opacity: 0.6;
-    }
-    #total-votes { 
-      font-size: 1rem; 
-      font-weight: 300;
-      margin-bottom: 10px;
-    }
+    /* 將重置按鈕藏在右下角，變半透明以免破壞畫面 */
     #reset-btn {
+      position: absolute; 
+      bottom: 20px; 
+      right: 20px; 
       background: transparent;
-      border: 1px solid #FFFFFF; 
-      color: #FFFFFF; 
-      padding: 5px 15px;
-      border-radius: 15px;
+      border: 1px solid rgba(255, 255, 255, 0.3); 
+      color: rgba(255, 255, 255, 0.3); 
+      padding: 8px 20px;
+      border-radius: 20px;
       cursor: pointer; 
       font-size: 0.8rem; 
       font-weight: 300; 
       transition: all 0.3s ease;
     }
     #reset-btn:hover { 
-      background-color: #FFFFFF;
-      color: #AF898E;
+      background-color: rgba(255, 255, 255, 0.9);
+      color: #333;
     }
   </style>
 </head>
 <body>
-  
-  <div class="rating-container">
+
+  <!-- 隱藏在右下角的重置按鈕 -->
+  <button id="reset-btn" onclick="resetVotes()">RESET</button>
+
+  <!-- 整個文字與頭像的排版區塊 -->
+  <div class="rating-overlay">
     
     <div class="profile-section">
-      <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" class="profile-pic" alt="Profile">
-      <h1 class="presenter-name">Chang</h1>
+      <div class="profile-pic"></div>
+      <h1 class="presenter-name">Lacie</h1>
     </div>
 
     <div class="score-display">
       <span id="rating-main">0.0</span>
-      <span id="rating-decimal">0</span>
+      <span id="rating-decimal">00</span>
     </div>
 
-    <div id="warning-message">
-      ⚠️ WARNING: SCORE BELOW 3.0. PENALTY IMMINENT.
-    </div>
-
-  </div>
-
-  <div class="footer-info">
-    <p id="total-votes">Total Ratings: 0</p>
-    <button id="reset-btn" onclick="resetVotes()">RESET</button>
   </div>
 
   <script>
-    // 您的專屬 Firebase 配置代碼
+    // 你的 Firebase 配置代碼
     const firebaseConfig = {
       apiKey: "AIzaSyD4mZm3QCYHg1BdwF4XZ8j9CpMbqtYqEDQ",
       authDomain: "nosedive-rating.firebaseapp.com",
@@ -160,10 +139,8 @@
 
     const ratingMain = document.getElementById('rating-main');
     const ratingDecimal = document.getElementById('rating-decimal');
-    const totalVotesText = document.getElementById('total-votes');
-    const warningMessage = document.getElementById('warning-message');
 
-   // 實時監聽資料庫的變化
+    // 實時監聽資料庫的變化
     database.ref('votes').on('value', (snapshot) => {
       const data = snapshot.val();
       if (data) {
@@ -175,36 +152,23 @@
           count++;
         });
         
-        // 【修改這裡】計算到小數點後三位，這樣小字才會有兩位數！
+        // 計算到小數點後三位
         const average = (totalScore / count).toFixed(3);
-        const scoreNumber = parseFloat(average);
         
-        // 拆分主分數與小字後兩位 (例如 4.243 -> 主分數 4.2，小字 43)
+        // 拆分主分數與小字後兩位
         const parts = average.split('.');
-        let mainPart = parts[0] + '.' + parts[1].charAt(0); // 取得 4.2
-        let decimalPart = parts[1].substring(1);            // 取得 43
+        let mainPart = parts[0] + '.' + parts[1].charAt(0);
+        let decimalPart = parts[1].substring(1);
         
-        // 更新畫面數字
         ratingMain.innerText = mainPart;
         ratingDecimal.innerText = decimalPart;
-        totalVotesText.innerText = `Total Ratings: ${count}`;
-        
-        // 檢查是否低於 3 分並觸發警示
-        if (scoreNumber > 0 && scoreNumber < 3.00) {
-          warningMessage.classList.add('show-warning');
-        } else {
-          warningMessage.classList.remove('show-warning');
-        }
 
         // 數字跳動特效
         ratingMain.style.transform = 'scale(1.05)';
         setTimeout(() => ratingMain.style.transform = 'scale(1)', 150);
       } else {
-        // 重置狀態
         ratingMain.innerText = "0.0";
-        ratingDecimal.innerText = "00"; // 重置也顯示兩個零
-        totalVotesText.innerText = "Total Ratings: 0";
-        warningMessage.classList.remove('show-warning');
+        ratingDecimal.innerText = "00";
       }
     });
 
