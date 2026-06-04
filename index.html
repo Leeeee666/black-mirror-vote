@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Rate the Presenter - Nosedive</title>
+  <!-- 引入 Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
   <style>
@@ -32,6 +33,7 @@
     }
     .star-rating { 
       display: flex; flex-direction: row-reverse; justify-content: center; gap: 5px; 
+      transition: opacity 0.3s;
     }
     .star-rating input { display: none; }
     .star-rating label { 
@@ -45,12 +47,16 @@
     .star-rating label:hover ~ label {
       color: #E67389; /* 選中或懸停時的深粉色星星 */
     }
-    #submit-btn {
+    
+    /* 按鈕共用樣式 */
+    .action-btn {
       margin-top: 40px; padding: 12px 25px; font-size: 1rem; font-weight: 300;
       background-color: transparent; border: 1px solid #E67389; color: #E67389; 
       cursor: pointer; transition: all 0.3s ease; border-radius: 30px; letter-spacing: 1px;
     }
-    #submit-btn:hover { background-color: #E67389; color: #F4C7CE; }
+    .action-btn:hover { background-color: #E67389; color: #F4C7CE; }
+    
+    #rerate-btn { display: none; } /* 重新評分按鈕預設隱藏 */
     #status { margin-top: 20px; font-size: 0.9rem; display: none; }
   </style>
 </head>
@@ -58,14 +64,17 @@
   
   <div class="card">
     <h1>"You've been rated"</h1>
-    <div class="star-rating">
+    <div class="star-rating" id="star-container">
       <input type="radio" name="rating" id="star5" value="5"><label for="star5">★</label>
       <input type="radio" name="rating" id="star4" value="4"><label for="star4">★</label>
       <input type="radio" name="rating" id="star3" value="3"><label for="star3">★</label>
       <input type="radio" name="rating" id="star2" value="2"><label for="star2">★</label>
       <input type="radio" name="rating" id="star1" value="1"><label for="star1">★</label>
     </div>
-    <button id="submit-btn">RATE</button>
+    
+    <button id="submit-btn" class="action-btn">RATE</button>
+    <button id="rerate-btn" class="action-btn">RE-RATE (重新評分)</button>
+    
     <p id="status">Rating submitted.</p>
   </div>
 
@@ -85,19 +94,53 @@
     const database = firebase.database();
 
     const submitBtn = document.getElementById('submit-btn');
+    const rerateBtn = document.getElementById('rerate-btn');
     const statusText = document.getElementById('status');
+    const starContainer = document.getElementById('star-container');
+
+    // 用來記錄這位聽眾「專屬的投票 ID」
+    let myVoteKey = null;
 
     submitBtn.addEventListener('click', () => {
       const selectedRating = document.querySelector('input[name="rating"]:checked');
       if (selectedRating) {
         const rating = parseInt(selectedRating.value);
-        database.ref('votes').push({ rating: rating, timestamp: Date.now() });
+        
+        if (!myVoteKey) {
+          // 第一次評分：建立一筆新資料，並把產生的 ID 記下來
+          const newVoteRef = database.ref('votes').push();
+          myVoteKey = newVoteRef.key;
+          newVoteRef.set({ rating: rating, timestamp: Date.now() });
+        } else {
+          // 更新評分：針對同一個 ID 覆蓋分數，總人數不會增加
+          database.ref('votes/' + myVoteKey).update({ rating: rating, timestamp: Date.now() });
+        }
+        
+        // 介面切換：隱藏送出鍵，顯示重新評分鍵
         submitBtn.style.display = 'none';
-        document.querySelector('.star-rating').style.opacity = '0.5';
+        rerateBtn.style.display = 'inline-block';
+        starContainer.style.opacity = '0.5';
+        starContainer.style.pointerEvents = 'none'; // 鎖定星星不可點擊
+        
+        statusText.innerText = 'Rating submitted.';
         statusText.style.display = 'block';
       } else {
         alert('Please select a rating.');
       }
+    });
+
+    // 當聽眾點擊「重新評分」
+    rerateBtn.addEventListener('click', () => {
+      // 解除星星鎖定
+      starContainer.style.opacity = '1';
+      starContainer.style.pointerEvents = 'auto';
+      
+      // 介面切換：隱藏重新評分鍵，顯示更新鍵
+      rerateBtn.style.display = 'none';
+      submitBtn.style.display = 'inline-block';
+      submitBtn.innerText = 'UPDATE (更新評分)'; // 更改按鈕文字提示聽眾
+      
+      statusText.style.display = 'none';
     });
   </script>
 </body>
