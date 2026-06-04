@@ -3,146 +3,157 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nosedive Social Rating - LIVE</title>
+  <title>Rate - Nosedive</title>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
   <style>
     body {
-      /* 改回純粹的淡粉色背景 */
-      background-color: #F4C7CE; 
+      background-color: #AF898E; /* 淡粉色 (莫蘭迪粉灰) 背景 */
+      color: #FFFFFF; /* 字體改為白色，配合粉底色更清晰 */
       font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-      /* 文字配合背景改為深粉色 */
-      color: #E67389; 
-      margin: 0;
-      height: 100vh;
-      overflow: hidden;
-      position: relative;
-    }
-
-    /* 保持在畫面中右側的科技感排版 */
-    .rating-overlay {
-      position: absolute;
-      top: 45%;
-      right: 15%;
-      transform: translateY(-50%);
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-    }
-
-    .profile-section {
-      display: flex;
-      align-items: center;
-      margin-bottom: -15px;
-    }
-
-    /* 頭像區塊：強制讀取 avatar.png */
-    .profile-pic {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      border: 3px solid #E67389; /* 邊框配合文字顏色 */
-      background-image: url('avatar.png');
-      background-size: cover;
-      background-position: center;
-      margin-right: 20px;
-      box-shadow: 0 4px 15px rgba(230, 115, 137, 0.3);
-    }
-
-    .presenter-name {
-      font-size: 6.5rem;
-      font-weight: 100; 
-      letter-spacing: 2px;
-      margin: 0;
-      /* 微微的文字陰影增加立體感 */
-      text-shadow: 0 2px 8px rgba(230, 115, 137, 0.2); 
-    }
-
-    .score-display {
-      display: flex;
-      align-items: baseline;
-      text-shadow: 0 2px 8px rgba(230, 115, 137, 0.2);
-      padding-left: 15px;
-    }
-
-    #rating-main {
-      font-size: 10rem;
-      font-weight: 100;
-      margin: 0; 
-      line-height: 1;
-      transition: transform 0.1s;
-    }
-
-    #rating-decimal {
-      font-size: 4.5rem;
-      font-weight: 100;
-      margin-left: 8px;
-    }
-
-    /* 頂部低分警告橫條 (低於3分滑出) */
-    #warning-message {
-      position: absolute;
-      top: 5%;
-      left: 50%;
-      transform: translateX(-50%) translateY(-20px);
-      padding: 15px 40px;
-      background-color: rgba(220, 53, 69, 0.95); 
-      color: white;
-      font-size: 1.8rem;
-      font-weight: 400;
-      border-radius: 50px;
-      letter-spacing: 2px;
-      box-shadow: 0 10px 25px rgba(220, 53, 69, 0.5);
-      opacity: 0;
-      pointer-events: none;
-      transition: all 0.5s ease;
-      z-index: 999;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      height: 100vh; margin: 0; overflow: hidden;
     }
     
-    .show-warning {
-      opacity: 1 !important;
-      transform: translateX(-50%) translateY(0) !important;
+    .phone-container {
+      width: 100%;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
-    /* 右下角重置按鈕 */
-    #reset-btn {
-      position: absolute; 
-      bottom: 20px; 
-      right: 20px; 
-      background: transparent;
-      border: 1px solid rgba(230, 115, 137, 0.5); 
-      color: rgba(230, 115, 137, 0.6); 
-      padding: 8px 20px;
-      border-radius: 20px;
+    /* 即時分數顯示區 */
+    .score-display {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      margin-bottom: 15px;
+      text-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    #score-main {
+      font-size: 6rem;
+      font-weight: 100;
+      line-height: 0.8;
+      letter-spacing: -2px;
+    }
+    .score-right {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-left: 5px;
+    }
+    /* 趨勢箭頭 (圈圈包覆) */
+    .trend-circle {
+      width: 24px;
+      height: 24px;
+      border: 1.5px solid #FFFFFF;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 2px;
+    }
+    #trend-arrow {
+      font-size: 1rem;
+      font-weight: bold;
+    }
+    #score-decimal {
+      font-size: 2.5rem;
+      font-weight: 100;
+      line-height: 1;
+    }
+
+    /* 對象資訊 (大頭貼 + ANON) */
+    .target-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 30px;
+    }
+    
+    /* 換成您的專屬頭像 avatar.png */
+    .target-avatar {
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      border: 1.5px solid #FFFFFF;
+      background-image: url('avatar.png'); /* 讀取您上傳的頭像 */
+      background-size: cover;
+      background-position: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .target-name {
+      font-size: 1.1rem;
+      font-weight: 300;
+      letter-spacing: 2px;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    /* 評分星星 */
+    .star-rating { 
+      display: flex; flex-direction: row-reverse; justify-content: center; gap: 8px; 
+      transition: opacity 0.3s;
+    }
+    .star-rating input { display: none; }
+    .star-rating label { 
+      font-size: 3rem; 
+      color: transparent;
+      -webkit-text-stroke: 1.5px #FFFFFF; /* 空心白框星星 */
       cursor: pointer; 
-      font-size: 0.8rem; 
-      font-weight: 300; 
-      transition: all 0.3s ease;
+      transition: all 0.3s; 
     }
-    #reset-btn:hover { 
-      background-color: #E67389;
-      color: #FFF;
+    /* 點擊後發出紫藍色光芒 */
+    .star-rating input:checked ~ label, 
+    .star-rating label:hover, 
+    .star-rating label:hover ~ label {
+      color: #8A78E5; 
+      -webkit-text-stroke: 1.5px #6A58C5;
+      text-shadow: 0 0 15px rgba(138, 120, 229, 0.8);
     }
+
+    /* 動作按鈕 */
+    .action-btn {
+      margin-top: 40px; padding: 12px 30px; font-size: 0.9rem; font-weight: 400;
+      background-color: transparent; border: 1.5px solid #FFFFFF; color: #FFFFFF; 
+      cursor: pointer; transition: all 0.3s ease; border-radius: 30px; letter-spacing: 2px;
+    }
+    .action-btn:hover { background-color: #FFFFFF; color: #AF898E; }
+    #rerate-btn { display: none; }
+    #status { margin-top: 20px; font-size: 0.8rem; font-weight: 300; display: none; }
+
   </style>
 </head>
 <body>
-
-  <div id="warning-message">
-    ⚠️ WARNING: SCORE BELOW 3.0. PENALTY IMMINENT.
-  </div>
-
-  <button id="reset-btn" onclick="resetVotes()">RESET</button>
-
-  <div class="rating-overlay">
-    <div class="profile-section">
-      <div class="profile-pic"></div>
-      <h1 class="presenter-name">Lacie</h1>
-    </div>
-
+  
+  <div class="phone-container">
+    
     <div class="score-display">
-      <span id="rating-main">0.0</span>
-      <span id="rating-decimal">00</span>
+      <span id="score-main">0.0</span>
+      <div class="score-right">
+        <div class="trend-circle"><span id="trend-arrow">-</span></div>
+        <span id="score-decimal">00</span>
+      </div>
     </div>
+
+    <div class="target-info">
+      <div class="target-avatar"></div>
+      <span class="target-name">ANON</span>
+    </div>
+
+    <div class="star-rating" id="star-container">
+      <input type="radio" name="rating" id="star5" value="5"><label for="star5">★</label>
+      <input type="radio" name="rating" id="star4" value="4"><label for="star4">★</label>
+      <input type="radio" name="rating" id="star3" value="3"><label for="star3">★</label>
+      <input type="radio" name="rating" id="star2" value="2"><label for="star2">★</label>
+      <input type="radio" name="rating" id="star1" value="1"><label for="star1">★</label>
+    </div>
+    
+    <button id="submit-btn" class="action-btn">RATE</button>
+    <button id="rerate-btn" class="action-btn">RE-RATE</button>
+    
+    <p id="status">Rating submitted.</p>
   </div>
 
   <script>
@@ -159,51 +170,85 @@
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
-    const ratingMain = document.getElementById('rating-main');
-    const ratingDecimal = document.getElementById('rating-decimal');
-    const warningMessage = document.getElementById('warning-message');
+    const scoreMain = document.getElementById('score-main');
+    const scoreDecimal = document.getElementById('score-decimal');
+    const trendArrow = document.getElementById('trend-arrow');
+    const submitBtn = document.getElementById('submit-btn');
+    const rerateBtn = document.getElementById('rerate-btn');
+    const statusText = document.getElementById('status');
+    const starContainer = document.getElementById('star-container');
+
+    let myVoteKey = null;
+    let previousScore = 0;
 
     database.ref('votes').on('value', (snapshot) => {
       const data = snapshot.val();
+      let currentScoreNum = 0.000;
+
       if (data) {
         let totalScore = 0;
         let count = 0;
-        
         Object.keys(data).forEach(key => {
           totalScore += data[key].rating;
           count++;
         });
         
         const average = (totalScore / count).toFixed(3);
-        const scoreNumber = parseFloat(average);
+        currentScoreNum = parseFloat(average);
         
         const parts = average.split('.');
-        let mainPart = parts[0] + '.' + parts[1].charAt(0);
-        let decimalPart = parts[1].substring(1);
-        
-        ratingMain.innerText = mainPart;
-        ratingDecimal.innerText = decimalPart;
-
-        if (scoreNumber > 0 && scoreNumber < 3.00) {
-          warningMessage.classList.add('show-warning');
-        } else {
-          warningMessage.classList.remove('show-warning');
-        }
-
-        ratingMain.style.transform = 'scale(1.05)';
-        setTimeout(() => ratingMain.style.transform = 'scale(1)', 150);
+        scoreMain.innerText = parts[0] + '.' + parts[1].charAt(0);
+        scoreDecimal.innerText = parts[1].substring(1);
       } else {
-        ratingMain.innerText = "0.0";
-        ratingDecimal.innerText = "00";
-        warningMessage.classList.remove('show-warning');
+        scoreMain.innerText = "0.0";
+        scoreDecimal.innerText = "00";
+      }
+
+      if (currentScoreNum > previousScore && previousScore !== 0) {
+        trendArrow.innerHTML = '↑';
+      } else if (currentScoreNum < previousScore) {
+        trendArrow.innerHTML = '↓';
+      } else {
+        trendArrow.innerHTML = '-';
+      }
+      
+      previousScore = currentScoreNum;
+    });
+
+    submitBtn.addEventListener('click', () => {
+      const selectedRating = document.querySelector('input[name="rating"]:checked');
+      if (selectedRating) {
+        const rating = parseInt(selectedRating.value);
+        
+        if (!myVoteKey) {
+          const newVoteRef = database.ref('votes').push();
+          myVoteKey = newVoteRef.key;
+          newVoteRef.set({ rating: rating, timestamp: Date.now() });
+        } else {
+          database.ref('votes/' + myVoteKey).update({ rating: rating, timestamp: Date.now() });
+        }
+        
+        submitBtn.style.display = 'none';
+        rerateBtn.style.display = 'inline-block';
+        starContainer.style.opacity = '0.4';
+        starContainer.style.pointerEvents = 'none';
+        
+        statusText.style.display = 'block';
+      } else {
+        alert('Please select a rating.');
       }
     });
 
-    function resetVotes() {
-      if(confirm("Clear all ratings?")) {
-        database.ref('votes').remove();
-      }
-    }
+    rerateBtn.addEventListener('click', () => {
+      starContainer.style.opacity = '1';
+      starContainer.style.pointerEvents = 'auto';
+      
+      rerateBtn.style.display = 'none';
+      submitBtn.style.display = 'inline-block';
+      submitBtn.innerText = 'UPDATE';
+      
+      statusText.style.display = 'none';
+    });
   </script>
 </body>
 </html>
